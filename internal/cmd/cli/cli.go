@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	// This would be where additional specific
+	// This would be where commands specific
 	// to this project binary may get added
 	// example: myExampleCommand.NewCmd(),
 	commands      = []*cobra.Command{}
@@ -40,31 +40,30 @@ func GetPluginsCLI() *cli.CLI {
 	)
 
 	c, err := cli.New(
-		// Add the name of your CLI binary
+
 		cli.WithCommandName("kcp-operator-sdk"),
 
-		// Add the version of your CLI binary
 		cli.WithVersion(versionString()),
 
-		// Register the plugins options which can be used to do the scaffolds via your CLI tool. See that we are using as example here the plugins which are implemented and provided by Kubebuilder
+		// Register the plugins options which can be used for the scaffolding via the CLI tool.
 		cli.WithPlugins(
 			gov3Bundle,
 			&declarativev1.Plugin{},
 		),
 
-		// Defines what will be the default plugin used by your binary. It means that will be the plugin used if no info be provided such as when the user runs `kubebuilder init`
+		// Defines the default plugin used by the binary when no info is provided, e.g. `kubebuilder init`
 		cli.WithDefaultPlugins(cfgv3.Version, gov3Bundle),
 
 		// Define the default project configuration version which will be used by the CLI when none is informed by --project-version flag.
 		cli.WithDefaultProjectVersion(cfgv3.Version),
 
-		// Adds your own commands to the CLI
+		// Adds custom commands to the CLI
 		cli.WithExtraCommands(commands...),
 
-		// Add your own alpha commands to the CLI
+		// Add custom alpha commands to the CLI
 		cli.WithExtraAlphaCommands(alphaCommands...),
 
-		// Adds the completion option for your CLI
+		// Adds the completion option to the CLI
 		cli.WithCompletion(),
 	)
 	if err != nil {
