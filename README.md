@@ -4,5 +4,5 @@ This project contains Kubebuilder CLI extensions (plugins) to help with building
 
 ## License
 
-Operator SDK is under Apache 2.0 license. See the [LICENSE][license_file] file for details.
+Operator SDK is under Apache 2.0 license. See the [LICENSE][./LICENSE] file for details.
 

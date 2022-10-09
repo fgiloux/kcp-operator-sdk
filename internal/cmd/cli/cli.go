@@ -13,9 +13,10 @@ import (
 	kustomizev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"
 	"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"
 	declarativev1 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"
-	golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
+	// golangv3 "sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"
 
 	"github.com/fgiloux/kcp-operator-sdk/internal/version"
+	kcpv3 "github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3"
 )
 
 var (
@@ -33,10 +34,10 @@ func Run() error {
 
 // GetPluginsCLI returns the plugins based CLI configured to be used in the new CLI binary
 func GetPluginsCLI() *cli.CLI {
-	// Bundle plugin which built the golang projects scaffold by Kubebuilder go/v3
+	// Bundle plugin which built the golang projects scaffold by the kcp plugin mimicking Kubebuilder go/v3
 	gov3Bundle, _ := plugin.NewBundle(golang.DefaultNameQualifier, plugin.Version{Number: 3},
 		kustomizev1.Plugin{},
-		golangv3.Plugin{},
+		kcpv3.Plugin{},
 	)
 
 	c, err := cli.New(
