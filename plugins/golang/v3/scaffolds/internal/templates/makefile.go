@@ -206,6 +206,8 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: test ## Build docker image with the manager.
+	mkdir -p api
+	mkdir -p controllers
 	docker build -t ${REGISTRY}/${IMG} .
 
 .PHONY: docker-push
@@ -260,6 +262,15 @@ deploy-crd: manifests $(KUSTOMIZE) ## Deploy controller
 .PHONY: undeploy-crd
 undeploy-crd: ## Undeploy controller. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default-crd | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: deploy-kcp
+deploy-kcp: manifests $(KUSTOMIZE) ## Deploy controller onto kcp
+        cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
+        $(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
+
+.PHONY: undeploy-kcp
+undeploy-kcp: ## Undeploy controller. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+        $(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
 
