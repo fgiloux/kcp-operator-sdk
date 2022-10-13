@@ -37,6 +37,6 @@ resources:
   - clusterrole.yaml
   - clusterrolebinding.yaml
 
-configurations:
-  - kustomizeconfig.yaml
+patchesStrategicMerge:
+  - patch_apiexport.yaml
 `

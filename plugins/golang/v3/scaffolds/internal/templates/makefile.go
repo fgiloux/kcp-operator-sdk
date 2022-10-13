@@ -101,8 +101,10 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: apiresourceschemas
-apiresourceschemas: $(KUSTOMIZE) ## Convert CRDs from config/crds to APIResourceSchemas. Specify APIEXPORT_PREFIX as needed.
+apiresourceschemas: kustomize ## Convert CRDs from config/crds to APIResourceSchemas. Specify APIEXPORT_PREFIX as needed.
 	$(KUSTOMIZE) build config/crd | kubectl kcp crd snapshot -f - --prefix $(APIEXPORT_PREFIX) > config/kcp/$(APIEXPORT_PREFIX).apiresourceschemas.yaml
+	sed -i "s/.*apiresourceschemas.yaml.*/  - $(APIEXPORT_PREFIX).apiresourceschemas.yaml/" config/kcp/kustomization.yaml
+	sed -i "s/PREFIX/$(APIEXPORT_PREFIX)/" config/kcp/patch_apiexport.yaml
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -265,12 +267,12 @@ undeploy-crd: ## Undeploy controller. Call with ignore-not-found=true to ignore 
 
 .PHONY: deploy-kcp
 deploy-kcp: manifests $(KUSTOMIZE) ## Deploy controller onto kcp
-        cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
-        $(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
+	$(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
 
 .PHONY: undeploy-kcp
 undeploy-kcp: ## Undeploy controller. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-        $(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
 

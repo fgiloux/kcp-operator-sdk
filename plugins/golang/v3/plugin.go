@@ -16,17 +16,13 @@ var (
 
 // FGI: starting simple
 // var _ plugin.Full = Plugin{}
-var _ plugin.Init = Plugin{}
 
 // Plugin implements the plugin.Full interface
-/* type Plugin struct {
-	initSubcommand
-	createAPISubcommand
-	createWebhookSubcommand
-	editSubcommand
-}*/
 type Plugin struct {
 	initSubcommand
+	createAPISubcommand
+	// createWebhookSubcommand
+	// editSubcommand
 }
 
 // Name returns the name of the plugin
@@ -42,7 +38,7 @@ func (Plugin) SupportedProjectVersions() []config.Version { return supportedProj
 func (p Plugin) GetInitSubcommand() plugin.InitSubcommand { return &p.initSubcommand }
 
 // GetCreateAPISubcommand will return the subcommand which is responsible for scaffolding apis
-//func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand { return &p.createAPISubcommand }
+func (p Plugin) GetCreateAPISubcommand() plugin.CreateAPISubcommand { return &p.createAPISubcommand }
 
 // GetCreateWebhookSubcommand will return the subcommand which is responsible for scaffolding webhooks
 /*func (p Plugin) GetCreateWebhookSubcommand() plugin.CreateWebhookSubcommand {
