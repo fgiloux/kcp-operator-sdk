@@ -55,6 +55,9 @@ bases:
 patchesStrategicMerge:
 - manager_patch.yaml
 
+configurations:
+- kustomizeconfig.yaml
+
 # Adjust to prefix
 vars:
 - name: API_EXPORT_NAME

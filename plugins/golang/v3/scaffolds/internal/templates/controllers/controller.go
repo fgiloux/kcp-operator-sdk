@@ -88,6 +88,7 @@ func (r *{{ .Resource.Kind }}Reconciler) Reconcile(ctx context.Context, req ctrl
 	// Include the clusterName from req.ObjectKey in the logger, similar to the namespace and name keys that are already
         // there.
         logger = logger.WithValues("clusterName", req.ClusterName)
+	logger.V(1).Info("Starting reconcile")
 
 	// Add the logical cluster to the context
         ctx = logicalcluster.WithCluster(ctx, logicalcluster.New(req.ClusterName))

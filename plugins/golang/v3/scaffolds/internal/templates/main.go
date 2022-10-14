@@ -192,8 +192,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	 datav1alpha1 "github.com/kcp-dev/controller-runtime-example/api/v1alpha1"
-
 	%s
 )
 
@@ -204,7 +202,6 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(datav1alpha1.AddToScheme(scheme))
 
 	%s
 }
@@ -346,7 +343,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

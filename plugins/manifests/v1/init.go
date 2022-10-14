@@ -78,6 +78,7 @@ func (s *initSubcommand) Scaffold(fs machinery.Filesystem) error {
 		&kcptemplates.Clusterrolebinding{},
 		&kcptemplates.Clusterrole{},
 		&defaultkcp.Kustomization{},
+		&defaultkcp.KustomizeConfig{},
 		&defaultkcp.ManagerPatch{},
 	); err != nil {
 		return fmt.Errorf("error scaffolding manifests: %w", err)
