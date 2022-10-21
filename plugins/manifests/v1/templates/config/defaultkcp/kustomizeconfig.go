@@ -32,11 +32,14 @@ func (f *KustomizeConfig) SetTemplateDefaults() error {
 	return nil
 }
 
-const kustomizeConfigTemplate = `
-nameReference:
+const kustomizeConfigTemplate = `nameReference:
 - kind: APIResourceSchema
   fieldSpecs:
   - kind: APIExport
     path: spec/latestResourceSchemas
+- kind: ConfigMap
+  fieldSpecs:
+  - kind: Deployment
+    path: spec/volumes/configMap/name
 
 `

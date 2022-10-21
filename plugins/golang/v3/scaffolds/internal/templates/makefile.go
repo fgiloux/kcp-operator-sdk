@@ -44,7 +44,7 @@ func (f *Makefile) SetTemplateDefaults() error {
 	f.IfExistsAction = machinery.Error
 
 	if f.Image == "" {
-		f.Image = "controller:latest"
+		f.Image = "controller:0.1"
 	}
 
 	return nil
@@ -119,8 +119,8 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet $(ENVTEST) ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+test: manifests generate fmt vet envtest ## Run tests.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./controllers/... -coverprofile cover.out
 
 ARTIFACT_DIR ?= .test
 
@@ -133,23 +133,23 @@ run-test-e2e: ## Run end-to-end tests on a cluster.
 
 .PHONY: ready-deployment
 ready-deployment: KUBECONFIG = $(ARTIFACT_DIR)/kcp.kubeconfig
-ready-deployment: kind-image install deploy apibinding ## Deploy the controller-manager and wait for it to be ready.
-	$(KCP_KUBECTL) --namespace "controller-runtime-example-system" rollout status deployment/controller-runtime-example-controller-manager
-# TODO(skuznets|ncdc): this APIBinding is not needed, but here only to work around https://github.com/kcp-dev/kcp/issues/1183 - remove it once that is fixed
+ready-deployment: kind-image deploy-kcp apibinding ## Deploy the controller-manager and wait for it to be ready.
+	$(KCP_KUBECTL) --namespace "{{ .ProjectName }}-system" rollout status deployment/{{ .ProjectName }}-controller-manager
 
+# This APIBinding is not needed, but here only to work around https://github.com/kcp-dev/kcp/issues/1183
 .PHONY: apibinding
 apibinding:
-	$( eval WORKSPACE = $(shell $(KCP_KUBECTL) kcp workspace . --short) )
+	$(eval WORKSPACE = $(shell $(KCP_KUBECTL) kcp workspace . --short))
 	sed 's/WORKSPACE/$(WORKSPACE)/' ./test/e2e/apibinding.yaml | $(KCP_KUBECTL) apply -f -
-	$(KCP_KUBECTL) wait --for=condition=Ready apibinding/data.my.domain
+	$(KCP_KUBECTL) wait --for=condition=Ready apibinding/{{ .ProjectName }}-{{ .ProjectName }}.{{ .Domain }}
 
 .PHONY: kind-image
 kind-image: docker-build ## Load the controller-manager image into the kind cluster.
-	kind load docker-image $(REGISTRY)/$(IMG) --name controller-runtime-example
+	kind load docker-image $(REGISTRY)/$(IMG) --name e2e-{{ .ProjectName }}
 
 $(ARTIFACT_DIR)/kind.kubeconfig: $(ARTIFACT_DIR) ## Run a kind cluster and generate a $KUBECONFIG for it.
-	@if ! kind get clusters --quiet | grep --quiet controller-runtime-example; then kind create cluster --name controller-runtime-example; fi
-	kind get kubeconfig --name controller-runtime-example > $(ARTIFACT_DIR)/kind.kubeconfig
+	@if ! kind get clusters --quiet | grep --quiet e2e-{{ .ProjectName }}; then kind create cluster --name e2e-{{ .ProjectName }}; fi
+	kind get kubeconfig --name e2e-{{ .ProjectName }} > $(ARTIFACT_DIR)/kind.kubeconfig
 
 $(ARTIFACT_DIR): ## Create a directory for test artifacts.
 	mkdir -p $(ARTIFACT_DIR)
@@ -158,24 +158,20 @@ KCP_KUBECTL ?= PATH=$(LOCALBIN):$(PATH) KUBECONFIG=$(ARTIFACT_DIR)/kcp.kubeconfi
 KIND_KUBECTL ?= kubectl --kubeconfig $(ARTIFACT_DIR)/kind.kubeconfig
 
 .PHONY: kcp-synctarget
-kcp-synctarget: kcp-workspace $(ARTIFACT_DIR)/syncer.yaml $(YQ) ## Add the kind cluster to kcp as a target for workloads.
+kcp-synctarget: kcp-workspace $(ARTIFACT_DIR)/syncer.yaml yq ## Add the kind cluster to kcp as a target for workloads.
 	$(KIND_KUBECTL) apply -f $(ARTIFACT_DIR)/syncer.yaml
-	$(eval DEPLOYMENT_NAME = $(shell $(YQ) 'select(.kind=="Deployment") | .metadata.name' < $(ARTIFACT_DIR)/syncer.yaml ))
-	$(eval DEPLOYMENT_NAMESPACE = $(shell $(YQ) 'select(.kind=="Deployment") | .metadata.namespace' < $(ARTIFACT_DIR)/syncer.yaml ))
-	$(KIND_KUBECTL) --namespace $(DEPLOYMENT_NAMESPACE) rollout status deployment/$(DEPLOYMENT_NAME)
-	@if [[ ! -s $(ARTIFACT_DIR)/syncer.log ]]; then ( $(KIND_KUBECTL) --namespace $(DEPLOYMENT_NAMESPACE) logs deployment/$(DEPLOYMENT_NAME) -f >$(ARTIFACT_DIR)/syncer.log 2>&1 & ); fi
-	$(KCP_KUBECTL) wait --for=condition=Ready synctarget/controller-runtime
+	$(KCP_KUBECTL) wait --for=condition=Ready synctarget/kind-e2e-{{ .ProjectName }}
 
 $(ARTIFACT_DIR)/syncer.yaml: ## Create the SyncTarget and generate the manifests necessary to register the kind cluster with kcp.
-	$(KCP_KUBECTL) kcp workload sync controller-runtime --resources services --syncer-image ghcr.io/kcp-dev/kcp/syncer:v$(KCP_VERSION) --output-file $(ARTIFACT_DIR)/syncer.yaml
+	$(KCP_KUBECTL) kcp workload sync kind-e2e-{{ .ProjectName }} --resources services --syncer-image ghcr.io/kcp-dev/kcp/syncer:v$(KCP_VERSION) --output-file $(ARTIFACT_DIR)/syncer.yaml
 
 .PHONY: kcp-workspace
 kcp-workspace: $(KUBECTL_KCP) kcp-server ## Create a workspace in kcp for the controller-manager.
 	$(KCP_KUBECTL) kcp workspace use '~'
-	@if ! $(KCP_KUBECTL) kcp workspace use controller-runtime-example; then $(KCP_KUBECTL) kcp workspace create controller-runtime-example --type universal --enter; fi
+	@if ! $(KCP_KUBECTL) kcp workspace use {{ .ProjectName }}; then $(KCP_KUBECTL) kcp workspace create {{ .ProjectName }} --type universal --enter; fi
 
 .PHONY: kcp-server
-kcp-server: $(KCP) $(ARTIFACT_DIR)/kcp ## Run the kcp server.
+kcp-server: kcp $(ARTIFACT_DIR)/kcp ## Run the kcp server.
 	@if [[ ! -s $(ARTIFACT_DIR)/kcp.log ]]; then ( $(KCP) start -v 5 --root-directory $(ARTIFACT_DIR)/kcp --kubeconfig-path $(ARTIFACT_DIR)/kcp.kubeconfig --audit-log-maxsize 1024 --audit-log-mode=batch --audit-log-batch-max-wait=1s --audit-log-batch-max-size=1000 --audit-log-batch-buffer-size=10000 --audit-log-batch-throttle-burst=15 --audit-log-batch-throttle-enable=true --audit-log-batch-throttle-qps=10 --audit-policy-file ./test/e2e/audit-policy.yaml --audit-log-path $(ARTIFACT_DIR)/audit.log >$(ARTIFACT_DIR)/kcp.log 2>&1 & ); fi
 	@while true; do if [[ ! -s $(ARTIFACT_DIR)/kcp.kubeconfig ]]; then sleep 0.2; else break; fi; done
 	@while true; do if ! kubectl --kubeconfig $(ARTIFACT_DIR)/kcp.kubeconfig get --raw /readyz >$(ARTIFACT_DIR)/kcp.probe.log 2>&1; then sleep 0.2; else break; fi; done
@@ -185,7 +181,7 @@ $(ARTIFACT_DIR)/kcp: ## Create a directory for the kcp server data.
 
 .PHONY: test-e2e-cleanup
 test-e2e-cleanup: ## Clean up processes and directories from an end-to-end test run.
-	kind delete cluster --name controller-runtime-example || true
+	kind delete cluster --name e2e-{{ .ProjectName }} || true
 	rm -rf $(ARTIFACT_DIR) || true
 	pkill -sigterm kcp || true
 	pkill -sigterm kubectl || true
@@ -201,7 +197,7 @@ APIEXPORT_NAME ?= {{ .Domain }}
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go --api-export-name $(NAME_PREFIX)$(APIEXPORT_NAME)
+	go run ./main.go --api-export-name $(NAME_PREFIX).$(APIEXPORT_NAME)
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.

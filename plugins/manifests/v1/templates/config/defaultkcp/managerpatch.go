@@ -47,7 +47,17 @@ spec:
       - name: manager
         args:
         - "--api-export-name=$(API_EXPORT_NAME)"
-{{- if not .ComponentConfig }}
+{{- if .ComponentConfig }}
+        - "--config=controller_manager_config.yaml"
+        volumeMounts:
+        - name: manager-config
+          mountPath: /controller_manager_config.yaml
+          subPath: controller_manager_config.yaml
+      volumes:
+      - name: manager-config
+        configMap:
+          name: manager-config
+{{- else }}
         - --leader-elect
 {{- end }}
 

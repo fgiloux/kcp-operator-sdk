@@ -26,10 +26,10 @@ const (
 	ControllerRuntimeVersion = "v0.11.2"
 	// ControllerToolsVersion is the kubernetes-sigs/controller-tools version to be used in the project
 	ControllerToolsVersion = "v0.10.0"
-	KCPVersion             = "v0.9.0"
+	KCPVersion             = "0.9.1"
 	YQVersion              = "v4.27.2"
 	Registry               = "localhost"
-	ImageName              = "controller:latest"
+	ImageName              = "controller:0.1"
 	EnvTestK8s             = "1.25"
 )
 

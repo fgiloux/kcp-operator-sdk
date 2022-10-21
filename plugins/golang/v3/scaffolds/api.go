@@ -8,6 +8,7 @@ import (
 	"github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3/scaffolds/internal/templates"
 	"github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3/scaffolds/internal/templates/api"
 	"github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3/scaffolds/internal/templates/controllers"
+	"github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3/scaffolds/internal/templates/e2e"
 	"github.com/fgiloux/kcp-operator-sdk/plugins/golang/v3/scaffolds/internal/templates/hack"
 	"sigs.k8s.io/kubebuilder/v3/pkg/config"
 	"sigs.k8s.io/kubebuilder/v3/pkg/machinery"
@@ -82,6 +83,9 @@ func (s *apiScaffolder) Scaffold() error {
 		if err := scaffold.Execute(
 			&controllers.SuiteTest{Force: s.force},
 			&controllers.Controller{ControllerRuntimeVersion: ControllerRuntimeVersion, Force: s.force},
+			&e2e.E2ETest{},
+			&e2e.APIBinding{},
+			&e2e.Audit{},
 		); err != nil {
 			return fmt.Errorf("error scaffolding controller: %v", err)
 		}
