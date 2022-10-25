@@ -11,6 +11,7 @@ var _ machinery.Template = &PatchAPIExport{}
 // PatchAPIExport scaffolds a kustomizeconfig.yaml for the manifests overlay folder.
 type PatchAPIExport struct {
 	machinery.TemplateMixin
+	machinery.ProjectNameMixin
 	machinery.DomainMixin
 	machinery.ResourceMixin
 }
@@ -37,7 +38,7 @@ const patchAPIExportTemplate = `# Set the reference to the latest APIRresourceSc
 apiVersion: apis.kcp.dev/v1alpha1
 kind: APIExport
 metadata:
-  name: test.tutorial.kubebuilder.io
+  name: {{ .ProjectName }}.tutorial.kubebuilder.io
 spec:
   latestResourceSchemas:
      - PREFIX.{{ .Resource.Plural }}.{{ .Domain }}
