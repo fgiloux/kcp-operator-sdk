@@ -236,15 +236,15 @@ ifndef ignore-not-found
 endif
 
 .PHONY: install
-install: manifests $(KUSTOMIZE) ## Install APIResourceSchemas and APIExport into kcp (using $KUBECONFIG or ~/.kube/config).
+install: manifests kustomize ## Install APIResourceSchemas and APIExport into kcp (using $KUBECONFIG or ~/.kube/config).
 	$(KUSTOMIZE) build config/kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
 
 .PHONY: uninstall
-uninstall: manifests $(KUSTOMIZE) ## Uninstall APIResourceSchemas and APIExport from kcp (using $KUBECONFIG or ~/.kube/config). Call with ignore-not-found=true to ignore resource not found errors during deletion.
+uninstall: manifests kustomize ## Uninstall APIResourceSchemas and APIExport from kcp (using $KUBECONFIG or ~/.kube/config). Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/kcp | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: manifests $(KUSTOMIZE) ## Deploy controller 
+deploy: manifests kustomize ## Deploy controller 
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
 	$(KUSTOMIZE) build config/default | kubectl --kubeconfig $(KUBECONFIG) apply -f -
 
@@ -253,7 +253,7 @@ undeploy: ## Undeploy controller. Call with ignore-not-found=true to ignore reso
 	$(KUSTOMIZE) build config/default | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy-crd
-deploy-crd: manifests $(KUSTOMIZE) ## Deploy controller
+deploy-crd: manifests kustomize ## Deploy controller
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
 	$(KUSTOMIZE) build config/default-crd | kubectl --kubeconfig $(KUBECONFIG) apply -f - || true
 
@@ -262,7 +262,7 @@ undeploy-crd: ## Undeploy controller. Call with ignore-not-found=true to ignore 
 	$(KUSTOMIZE) build config/default-crd | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy-kcp
-deploy-kcp: manifests $(KUSTOMIZE) ## Deploy controller onto kcp
+deploy-kcp: manifests kustomize ## Deploy controller onto kcp
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
 	$(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
 
