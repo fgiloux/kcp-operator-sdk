@@ -125,14 +125,13 @@ test: manifests generate fmt vet envtest ## Run tests.
 ARTIFACT_DIR ?= .test
 
 .PHONY: test-e2e
-test-e2e: $(ARTIFACT_DIR)/kind.kubeconfig kcp-synctarget ready-deployment run-test-e2e ## Set up prerequisites and run end-to-end tests on a cluster.
+test-e2e: $(eval FORCE_DEPLOY = true) $(ARTIFACT_DIR)/kind.kubeconfig kcp-synctarget ready-deployment run-test-e2e ## Set up prerequisites and run end-to-end tests on a cluster.
 
 .PHONY: run-test-e2e
 run-test-e2e: ## Run end-to-end tests on a cluster.
 	go test ./test/e2e/... --kubeconfig $(abspath $(ARTIFACT_DIR)/kcp.kubeconfig) --workspace $(shell $(KCP_KUBECTL) kcp workspace . --short)
 
 .PHONY: ready-deployment
-ready-deployment: KUBECONFIG = $(ARTIFACT_DIR)/kcp.kubeconfig
 ready-deployment: kind-image deploy-kcp apibinding ## Deploy the controller-manager and wait for it to be ready.
 	$(KCP_KUBECTL) --namespace "{{ .ProjectName }}-system" rollout status deployment/{{ .ProjectName }}-controller-manager
 
@@ -262,13 +261,13 @@ undeploy-crd: ## Undeploy controller. Call with ignore-not-found=true to ignore 
 	$(KUSTOMIZE) build config/default-crd | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy-kcp
-deploy-kcp: manifests kustomize ## Deploy controller onto kcp
+deploy-kcp: manifests apiresourceschemas ## Deploy controller onto kcp
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${REGISTRY}/${IMG}
-	$(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) apply -f -
+	$(KUSTOMIZE) build config/default-kcp | $(KCP_KUBECTL) replace --force=$(FORCE_DEPLOY) -f -
 
 .PHONY: undeploy-kcp
 undeploy-kcp: ## Undeploy controller. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default-kcp | kubectl --kubeconfig $(KUBECONFIG) delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUSTOMIZE) build config/default-kcp | $(KCP_KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
 
