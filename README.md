@@ -1,11 +1,11 @@
-# kcp-operator-sdk
+# kcp Operator SDK
 
 This project contains code generators to help with building cluster / [kcp](https://github.com/kcp-dev/kcp) aware operators.
 ## Description
 
 After running a few commands the sdk generates all the plumbing so that operator authors can focus on designing their API and implementing the business logic.
 
-kcp-operator-sdk will generate for you:
+`kcp-operator-sdk` will generate for you:
 
 - Code doing the json conversion for the API (custom resource) you have defined
 - Configuration files for
@@ -47,7 +47,12 @@ $ make test-e2e
 
 **NOTE:** Run `make --help` for more information on all potential `make` targets
 
+## Specificities
+
+A careful observer may notice that the `create webhook`command generates artefacts for Kubernetes deployments but not for kcp deployments.
+kcp is indeed taking a [different direction](https://github.com/kubernetes/enhancements/tree/master/keps/sig-api-machinery/3488-cel-admission-control), using [CEL based conversion](https://hackmd.io/_EnPemBUTF-b7WFs8o6Gjw) for API evolution.
+
 ## License
 
-Operator SDK is under Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
+kcp Operator SDK is under Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
 
