@@ -38,7 +38,7 @@ const patchAPIExportTemplate = `# Set the reference to the latest APIRresourceSc
 apiVersion: apis.kcp.dev/v1alpha1
 kind: APIExport
 metadata:
-  name: {{ .ProjectName }}.tutorial.kubebuilder.io
+  name: {{ .ProjectName }}.{{ .Domain }}
 spec:
   latestResourceSchemas:
      - PREFIX.{{ .Resource.Plural }}.{{ .Domain }}
